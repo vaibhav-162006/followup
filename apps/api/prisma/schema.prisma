@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  WON
+  LOST
+}
+
+enum LeadSource {
+  WHATSAPP
+  MANUAL
+  OTHER
+}
+
+enum ActivityType {
+  CREATED
+  NOTE
+  STATUS_CHANGE
+  FOLLOW_UP_SCHEDULED
+  FOLLOW_UP_COMPLETED
+}
+
+enum FollowUpStatus {
+  PENDING
+  DONE
+  CANCELLED
+}
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  leads     Lead[]
+  followUps FollowUp[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  businessId   String
+  email        String   @unique
+  name         String
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business  Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  activities LeadActivity[]
+
+  @@index([businessId])
+}
+
+model Lead {
+  id             String     @id @default(cuid())
+  businessId     String
+  name           String
+  phone          String
+  email          String?
+  notes          String?
+  status         LeadStatus @default(NEW)
+  source         LeadSource @default(MANUAL)
+  lastContactedAt DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  activities LeadActivity[]
+  followUps  FollowUp[]
+
+  @@unique([businessId, phone])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+}
+
+model LeadActivity {
+  id        String       @id @default(cuid())
+  leadId    String
+  userId    String?
+  type      ActivityType
+  body      String
+  createdAt DateTime     @default(now())
+
+  lead Lead  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+}
+
+model FollowUp {
+  id          String         @id @default(cuid())
+  businessId  String
+  leadId      String
+  dueAt       DateTime
+  status      FollowUpStatus @default(PENDING)
+  note        String?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  lead     Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, status, dueAt])
+  @@index([leadId, status])
+}

@@ -20,7 +20,9 @@ export function App() {
   });
 
   const apiLabel = health.isSuccess
-    ? "API connected"
+    ? health.data.database === "up"
+      ? "API + DB connected"
+      : "API up, database down"
     : health.isPending
       ? "Checking API…"
       : "API offline";
@@ -40,7 +42,7 @@ export function App() {
         <div className="flex items-center gap-3 text-xs">
           <span
             className={`rounded-full border px-3 py-1 ${
-              health.isSuccess
+              health.isSuccess && health.data.database === "up"
                 ? "border-emerald-400/40 text-emerald-300"
                 : "border-white/10 text-zinc-400"
             }`}

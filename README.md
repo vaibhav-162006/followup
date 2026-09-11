@@ -12,10 +12,17 @@ FollowUp helps small businesses turn WhatsApp enquiries into paying customers by
 
 ## Develop
 
+Postgres should be running locally. Create the database once:
+
 ```sh
+createdb followup
+cp apps/api/.env.example apps/api/.env
 pnpm install
+pnpm db:migrate
+pnpm db:seed
 pnpm dev
 ```
 
 - Web: http://localhost:5173
 - API health: http://localhost:3001/health
+- Leads: http://localhost:3001/leads
